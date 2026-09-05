@@ -15,8 +15,10 @@ import { PolitiqueDelaiFixe } from "./metier/ports/politique-annulation";
 import { ReservationRepositoryMemoire } from "./persistance/reservation.repository.memoire";
 import { MailZenClient, NotificateurMailZen } from "./infrastructure/notificateur.mailzen";
 import { ReservationControleur } from "./presentation/reservation.controleur";
-import { authentification, enchainer, journalisation } from "./presentation/middlewares";
+import { authentification, enchainer, exigerRole, journalisation } from "./presentation/middlewares";
 
+//Base de donnees en memoire, pre-remplie pour les tests. Dans une vraie base,
+//ce serait un SELECT. Le metier ne connait pas la forme de stockage.
 const MEMBRES: Record<string, string> = {
   "M-0412": "karim@exemple.fr",
   "M-0977": "lina@exemple.fr",
@@ -39,9 +41,16 @@ export function construireApplication() {
   const service = new ReservationService(repository, notificateur, politique);
   const controleur = new ReservationControleur(service, (id) => MEMBRES[id] ?? "inconnu@exemple.fr");
 
-  const routeReserver = enchainer([journalisation, authentification], controleur.reserver);
+  const routeReserver = enchainer(
+    [journalisation, authentification, exigerRole("membre")],
+    controleur.reserver
+  );
+  const routeReserverAccueil = enchainer(
+    [journalisation, authentification, exigerRole("accueil")],
+    controleur.reserver
+  );
 
-  return { service, controleur, routeReserver, repository };
+  return { service, controleur, routeReserver, routeReserverAccueil, repository };
 }
 
 if (require.main === module) {

@@ -17,6 +17,7 @@ export type Echec =
   | "creneau_indisponible"
   | "quota_atteint"
   | "introuvable"
+  | "interdit"
   | "trop_tard";
 
 export type Resultat<T> = { ok: true; valeur: T } | { ok: false; echec: Echec };
@@ -34,10 +35,15 @@ export class ReservationService {
   async reserver(demande: {
     salleId: string;
     membreId: string;
+    demandeurId: string;
     emailMembre: string;
     creneau: Creneau;
     soumisAuQuota: boolean;
   }): Promise<Resultat<Reservation>> {
+    if (demande.soumisAuQuota && demande.demandeurId !== demande.membreId) {
+      return { ok: false, echec: "interdit" };
+    }
+
     // RG-02
     if (!creneauAutorise(demande.creneau)) {
       return { ok: false, echec: "creneau_non_autorise" };
@@ -82,11 +88,15 @@ export class ReservationService {
 
   async annuler(demande: {
     reservationId: string;
+    demandeurId: string;
     emailMembre: string;
   }): Promise<Resultat<Reservation>> {
     const reservation = await this.repository.parId(demande.reservationId);
     if (!reservation || !reservation.estConfirmee()) {
       return { ok: false, echec: "introuvable" };
+    }
+    if (reservation.membreId !== demande.demandeurId) {
+      return { ok: false, echec: "interdit" };
     }
 
     // RG-03, deleguee a la strategie : le service ne connait plus le delai.

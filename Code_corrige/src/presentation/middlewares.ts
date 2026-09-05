@@ -24,15 +24,15 @@ export const journalisation: Middleware = (suivant) => async (requete) => {
 
 export const authentification: Middleware = (suivant) => async (requete) => {
   if (!requete.utilisateur) {
+    // 401 si l'utilisateur est absent
     return { code: 401, corps: { message: "Authentification requise" } };
   }
   return suivant(requete);
 };
 
+/** contrôle de rôle (403 si le rôle ne correspond pas) */
 export const exigerRole =
-  (role: "membre" | "accueil"): Middleware =>
-  (suivant) =>
-  async (requete) => {
+  (role: "membre" | "accueil"): Middleware => (suivant) => async (requete) => {
     if (requete.utilisateur?.role !== role) {
       return { code: 403, corps: { message: "Acces refuse" } };
     }
