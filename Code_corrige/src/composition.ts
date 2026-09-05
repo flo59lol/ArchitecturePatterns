@@ -13,7 +13,7 @@
 import { ReservationService } from "./metier/reservation.service";
 import { PolitiqueDelaiFixe } from "./metier/ports/politique-annulation";
 import { ReservationRepositoryMemoire } from "./persistance/reservation.repository.memoire";
-import { NotificateurConsole } from "./infrastructure/notificateur.console";
+import { MailZenClient, NotificateurMailZen } from "./infrastructure/notificateur.mailzen";
 import { ReservationControleur } from "./presentation/reservation.controleur";
 import { authentification, enchainer, journalisation } from "./presentation/middlewares";
 
@@ -33,7 +33,7 @@ export function construireApplication() {
       statut: "confirmee",
     },
   ]);
-  const notificateur = new NotificateurConsole();
+  const notificateur = new NotificateurMailZen(new MailZenClient());
   const politique = new PolitiqueDelaiFixe(2); // RG-03
 
   const service = new ReservationService(repository, notificateur, politique);
