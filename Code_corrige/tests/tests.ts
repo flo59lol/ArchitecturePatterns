@@ -99,6 +99,16 @@ test("reservation refusee si le creneau chevauche (RG-01)", async () => {
   assert.equal((r as any).echec, "creneau_indisponible");
 });
 
+test("le repository filtre la salle et la periode demandee", async () => {
+  const repository = new ReservationRepositoryMemoire([
+    { id: "R-001", salleId: "PAR-1", membreId: "M-0412", debut: new Date("2026-09-14T09:00").toISOString(), fin: new Date("2026-09-14T10:00").toISOString(), statut: "confirmee" },
+    { id: "R-002", salleId: "LYO-2", membreId: "M-0977", debut: new Date("2026-09-14T09:30").toISOString(), fin: new Date("2026-09-14T10:30").toISOString(), statut: "confirmee" },
+    { id: "R-003", salleId: "PAR-1", membreId: "M-0977", debut: new Date("2026-09-14T12:00").toISOString(), fin: new Date("2026-09-14T13:00").toISOString(), statut: "confirmee" },
+  ]);
+  const resultats = await repository.confirmeesPourSalle("PAR-1", c("2026-09-14T09:30", "2026-09-14T10:30"));
+  assert.deepEqual(resultats.map((r) => r.id), ["R-001"]);
+});
+
 test("quota de 2 reservations a venir (RG-04)", async () => {
   const deja = [1, 2].map((i) => ({
     id: "R-00" + i, salleId: "PAR-1", membreId: "M-0412",
