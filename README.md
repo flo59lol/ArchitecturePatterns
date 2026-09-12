@@ -1,22 +1,66 @@
-# ArchitecturePatterns
-TP 1/2
+# Résa
 
-## Note de décisions architecturales
+Résa aide les membres et l'accueil à réserver des salles et à gérer les annulations sans friction ni confusion.
 
-### 1. Emplacement de RG-01
+## Pour qui
 
-RG-01 interdit deux réservations qui se chevauchent pour une même salle. Cette règle est placée dans la couche métier, dans `ReservationService`, car elle exprime une contrainte du domaine et non un détail de transport ou de stockage. Le service demande au repository les réservations confirmées de la salle et de la période concernées, puis applique `seChevauchent`. La fonction de comparaison reste dans le module métier afin d'avoir une définition unique et testable des bornes : les inégalités sont strictes, donc deux créneaux contigus sont autorisés.
+- Les membres qui souhaitent réserver une salle pour eux-mêmes.
+- L'équipe d'accueil qui vérifie les demandes et les accès.
+- Les développeurs et mainteneurs qui veulent comprendre le flux métier et les règles de réservation.
 
-Le repository ne décide pas si une demande est acceptable. Il optimise la recherche en filtrant les données par salle, statut et période, puis restitue les objets nécessaires au service. Cette séparation évite de recopier RG-01 dans chaque adaptateur (mémoire, SQL ou autre) et garantit que le comportement reste identique lorsque l'infrastructure change.
+Pour aller plus loin, consultez la documentation d'architecture dans [docs/architecture.md](docs/architecture.md).
 
-### 2. Répartition des permissions entre middleware et métier
+## Installation
 
-Le middleware constitue la frontière d'accès. `authentification` vérifie qu'un utilisateur est présent et `exigerRole` contrôle que la route est accessible au rôle attendu. Ces contrôles sont adaptés à la présentation : ils peuvent produire directement les réponses HTTP `401` et `403`, et ils empêchent une requête non autorisée d'atteindre le service.
+Prérequis : Node.js 20.x ou 22.x, npm 10.x ou supérieur.
 
-Le métier conserve toutefois les permissions qui dépendent de la demande et de l'objet manipulé. Par exemple, un membre ne peut réserver que pour lui-même, et seul le propriétaire peut annuler sa réservation. Ces règles ne doivent pas être confiées uniquement au middleware : elles doivent rester vraies si le service est appelé par une autre route, un traitement interne ou un test. De même, le service porte les règles fonctionnelles comme RG-01, le quota et les horaires. Le middleware filtre l'accès général ; le métier protège les invariants et les droits liés aux données.
+```bash
+cd Code_corrige
+npm install
+npx tsx tests/tests.ts
+```
 
-### 3. Protection retenue contre la concurrence
+Résultat attendu : la suite de tests s’exécute et affiche un bilan de réussite, avec un message du type “N tests réussis.”
 
-Vérifier qu'un créneau est libre puis écrire la réservation ne suffit pas si deux demandes arrivent simultanément : elles peuvent toutes deux observer la même disponibilité avant que l'une d'elles n'écrive, puis créer un chevauchement. La protection retenue est donc une garantie d'unicité au moment de l'écriture, portée par le repository. L'implémentation mémoire recontrôle le conflit juste avant l'enregistrement et lève `CONFLIT_UNICITE` si une réservation confirmée chevauche déjà le créneau.
+Si ça échoue :
+- si `tsx` ou `npm` est introuvable, vérifiez que Node.js est bien installé et démarré avec une version 20+ ;
+- si l’installation bloque sur une version de Node trop ancienne, mettez à jour Node.js puis relancez `npm install`.
 
-Le service conserve la vérification de disponibilité pour fournir un refus fonctionnel rapide, mais il ne suppose pas que cette vérification est atomique. Dans une vraie base de données, la même décision doit être assurée par une contrainte d'exclusion ou une transaction sérialisable, afin que la vérification et l'écriture soient protégées par le stockage lui-même. La notification de confirmation n'est envoyée qu'après une écriture réussie.
+## Utilisation
+
+Exemple minimal qui fonctionne :
+
+```bash
+cd Code_corrige
+npx tsx src/composition.ts
+```
+
+Ce lancement exécute un petit scénario de démonstration : il crée une application de réservation, tente une réservation pour un membre, puis montre le comportement de sécurité et de refus sur une requête non authentifiée.
+
+## Architecture
+
+```text
+Code_corrige/
+  src/
+    composition.ts
+    metier/
+    persistance/
+    presentation/
+    infrastructure/
+  tests/
+```
+
+La vue complète du module est décrite dans [docs/architecture.md](docs/architecture.md).
+
+## Contribuer
+
+- /!\ Les changements de règle métier doivent rester dans la couche métier, pas dans la présentation ou la persistance.
+- Les tests doivent être relancés avant toute fusion : `npx tsx tests/tests.ts`.
+- Le code de la couche de présentation ne doit pas réécrire les validations métier déjà définies dans le service.
+- Les nouvelles décisions importantes / les nouveaux choix d'architecture doivent être documentés dans [docs/architecture.md](docs/architecture.md).
+
+## Licence / contact
+
+Florian Robache : florian1.robache@gmail.com
+Ilaria School : NdukaNZEKA@school.ilariaacademy.org
+Code source à but pédagogique.

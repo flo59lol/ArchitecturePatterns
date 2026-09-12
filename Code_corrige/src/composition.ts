@@ -1,15 +1,3 @@
-/**
- * RACINE DE COMPOSITION - l'injection de dependances a la main.
- *
- * C'est le SEUL endroit du programme ou l'on ecrit "new". Partout ailleurs,
- * les dependances arrivent par le constructeur. Une dizaine de lignes ici
- * remplacent tout un conteneur : quand Angular ou ASP.NET Core injectent
- * pour vous, ils font exactement ce travail, en automatique.
- *
- * Changer de base, de prestataire d'e-mail ou de politique d'annulation
- * se fait dans ce fichier, sans toucher au metier.
- */
-
 import { ReservationService } from "./metier/reservation.service";
 import { PolitiqueDelaiFixe } from "./metier/ports/politique-annulation";
 import { ReservationRepositoryMemoire } from "./persistance/reservation.repository.memoire";

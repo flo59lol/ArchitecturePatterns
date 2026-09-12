@@ -1,11 +1,3 @@
-/**
- * Couche METIER - le service de reservation.
- *
- * C'est ICI que vivent les regles. Un seul endroit, donc aucune divergence possible.
- * Le service ne connait ni HTTP (pas de code 409) ni SQL (pas de requete) :
- * il ne depend que de ses PORTS, recus par le constructeur.
- */
-
 import { Reservation } from "./reservation";
 import { Creneau, creneauAutorise, seChevauchent } from "./creneau";
 import { ReservationRepository } from "./ports/reservation.repository";
@@ -44,12 +36,10 @@ export class ReservationService {
       return { ok: false, echec: "interdit" };
     }
 
-    // RG-02
     if (!creneauAutorise(demande.creneau)) {
       return { ok: false, echec: "creneau_non_autorise" };
     }
 
-    // RG-04
     if (demande.soumisAuQuota) {
       const aVenir = await this.repository.aVenirPourMembre(
         demande.membreId,
@@ -60,8 +50,8 @@ export class ReservationService {
       }
     }
 
-    // RG-01 : on ne charge que les reservations de la salle sur la periode,
-    // jamais toute la table. Voir la note d'ecoconception du corrige.
+    // Le conflit est calculé à partir des réservations déjà confirmées de la salle,
+    // sans charger l’intégralité de la base. La règle métier reste à un seul endroit.
     const voisines = await this.repository.confirmeesPourSalle(
       demande.salleId,
       demande.creneau
@@ -78,8 +68,8 @@ export class ReservationService {
       creneau: demande.creneau,
     });
 
-    // Le repository doit garantir l'unicite au moment de l'ecriture :
-    // "verifier puis ecrire" n'est pas atomique. Voir la partie concurrence.
+    // La vérification de disponibilité n’est pas atomique par elle-même : la persistance
+    // protège aussi l’écriture contre les dédoublements simultanés.
     await this.repository.enregistrer(reservation);
     await this.notificateur.confirmationCreee(reservation, demande.emailMembre);
 
@@ -99,7 +89,7 @@ export class ReservationService {
       return { ok: false, echec: "interdit" };
     }
 
-    // RG-03, deleguee a la strategie : le service ne connait plus le delai.
+    // La règle de délai est dépendante de la stratégie choisie, pas de la logique métier.
     if (!this.politiqueAnnulation.peutAnnuler(reservation, this.maintenant())) {
       return { ok: false, echec: "trop_tard" };
     }

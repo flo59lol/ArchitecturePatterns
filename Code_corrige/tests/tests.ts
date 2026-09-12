@@ -205,7 +205,7 @@ test("seul le proprietaire peut annuler sa reservation", async () => {
   assert.equal((await repository.parId("R-011"))?.estConfirmee(), true);
 });
 
-setTimeout(() => console.log("\n" + reussis + " tests reussis.\n"), 200);
+setTimeout(() => console.log("\n" + reussis + " tests réussis.\n"), 200);
 
 test("une requete non authentifiee n'atteint pas le service", async () => {
   let appels = 0;
