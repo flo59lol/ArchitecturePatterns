@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Résa - API de réservation de salles
+  version: 1.1.0
+  description: Contrat HTTP du module de réservation de salles.
+
+paths:
+  /salles:
+    get:
+      tags:
+        - Salles
+      summary: Liste les salles disponibles
+      description: Retourne les salles accessibles pour l'utilisateur authentifié.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liste des salles disponibles retournée avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Salle"
+        "401":
+          description: Authentification requise pour consulter les salles.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: AUTHENTIFICATION_REQUISE
+                message: Authentification requise
+        "403":
+          description: L'utilisateur authentifié n'a pas le rôle membre ou accueil requis pour consulter les salles.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: ACCES_REFUSE
+                message: Accès refusé
+        "422":
+          description: Les critères de recherche transmis sont invalides.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: REQUETE_INVALIDE
+                message: Critères de recherche invalides
+
+  /reservations:
+    post:
+      tags:
+        - Réservations
+      summary: Crée une réservation
+      description: Crée une réservation pour un membre ou pour un tiers lorsque la demande est faite par l'accueil.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DemandeReservation"
+      responses:
+        "201":
+          description: Réservation créée et confirmation envoyée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "401":
+          description: Aucun utilisateur authentifié, le middleware d'authentification bloque la demande.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: AUTHENTIFICATION_REQUISE
+                message: Authentification requise
+        "403":
+          description: RG-05 appliquée, un membre ne peut réserver que pour lui-même, ou le rôle n'est pas autorisé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              examples:
+                tiers:
+                  value:
+                    code: RESERVATION_TIERS_INTERDITE
+                    message: Réservation pour un tiers interdite
+                acces:
+                  value:
+                    code: ACCES_REFUSE
+                    message: Accès refusé
+        "409":
+          description: RG-01 appliquée, un créneau confirmé chevauche déjà une réservation de la même salle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: CRENEAU_INDISPONIBLE
+                message: Créneau indisponible
+        "422":
+          description: RG-02 ou RG-04 appliquée, ou les données obligatoires et les dates sont invalides.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              examples:
+                champsManquants:
+                  value:
+                    code: CHAMPS_MANQUANTS
+                    message: Champs manquants
+                datesInvalides:
+                  value:
+                    code: DATES_INVALIDES
+                    message: Dates invalides
+                creneauNonAutorise:
+                  value:
+                    code: CRENEAU_NON_AUTORISE
+                    message: Créneau non autorisé
+                quotaAtteint:
+                  value:
+                    code: QUOTA_ATTEINT
+                    message: Quota de 2 réservations atteint
+
+  /reservations/{id}:
+    delete:
+      tags:
+        - Réservations
+      summary: Annule une réservation
+      description: Annule une réservation confirmée appartenant à l'utilisateur demandeur.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant de la réservation à annuler.
+          schema:
+            type: string
+            example: R-001
+      responses:
+        "200":
+          description: Réservation annulée et notification envoyée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "401":
+          description: Aucun utilisateur authentifié, le middleware d'authentification bloque la demande.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: AUTHENTIFICATION_REQUISE
+                message: Authentification requise
+        "403":
+          description: RG-05 appliquée, un membre ne peut annuler que sa propre réservation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: ACCES_REFUSE
+                message: Accès refusé
+        "404":
+          description: La réservation demandée n'existe pas ou n'est plus confirmée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: RESERVATION_INTROUVABLE
+                message: Réservation introuvable
+        "422":
+          description: RG-03 appliquée, l'annulation est demandée moins de deux heures avant le début du créneau, ou l'identifiant est vide.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erreur"
+              example:
+                code: TROP_TARD
+                message: Trop tard pour annuler
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Salle:
+      type: object
+      required: [id, site]
+      properties:
+        id: { type: string, example: LYO-2 }
+        site: { type: string, example: lyon }
+    Reservation:
+      type: object
+      required: [id, salleId, membreId, debut, fin, statut]
+      properties:
+        id: { type: string, example: R-001 }
+        salleId: { type: string, example: LYO-2 }
+        membreId: { type: string, example: M-0412 }
+        debut: { type: string, format: date-time, example: 2026-09-14T09:00:00Z }
+        fin: { type: string, format: date-time, example: 2026-09-14T10:00:00Z }
+        statut: { type: string, enum: [confirmee, annulee], example: confirmee }
+    DemandeReservation:
+      type: object
+      required: [salleId, membreId, debut, fin]
+      properties:
+        salleId: { type: string, example: LYO-2 }
+        membreId: { type: string, example: M-0412 }
+        debut: { type: string, format: date-time, example: 2026-09-14T09:00:00Z }
+        fin: { type: string, format: date-time, example: 2026-09-14T10:00:00Z }
+    Erreur:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: CRENEAU_INDISPONIBLE }
+        message: { type: string, example: Créneau indisponible }
