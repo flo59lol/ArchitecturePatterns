@@ -6,13 +6,18 @@ Résa aide les membres et l'accueil à réserver des salles et à gérer les ann
 
 - Les membres qui souhaitent réserver une salle pour eux-mêmes.
 - L'équipe d'accueil qui vérifie les demandes et les accès.
-- Les développeurs et mainteneurs qui veulent comprendre le flux métier et les règles de réservation.
+- (Les développeurs et mainteneurs qui veulent comprendre le flux métier et les règles de réservation.)
 
 Pour aller plus loin, consultez la documentation d'architecture dans [docs/architecture.md](docs/architecture.md).
 
 ## Installation
 
 Prérequis : Node.js 20.x ou 22.x, npm 10.x ou supérieur.
+```bash
+node --version
+```
+
+- si v(ersion) > 20.x :
 
 ```bash
 cd Code_corrige
@@ -24,7 +29,13 @@ Résultat attendu : la suite de tests s’exécute et affiche un bilan de réuss
 
 Si ça échoue :
 - si `tsx` ou `npm` est introuvable, vérifiez que Node.js est bien installé et démarré avec une version 20+ ;
-- si l’installation bloque sur une version de Node trop ancienne, mettez à jour Node.js puis relancez `npm install`.
+- si l’installation bloque sur une version de Node trop ancienne, mettez à jour Node.js puis relancez `npm install` →
+```bash
+nvm install lts
+nvm use lts
+
+npm install
+```
 
 ## Utilisation
 
@@ -54,13 +65,14 @@ La vue complète du module est décrite dans [docs/architecture.md](docs/archite
 
 ## Contribuer
 
-- /!\ Les changements de règle métier doivent rester dans la couche métier, pas dans la présentation ou la persistance.
+- **/!\\** Les changements de règle métier doivent rester dans la couche métier, pas dans la présentation ou la persistance.
 - Les tests doivent être relancés avant toute fusion : `npx tsx tests/tests.ts`.
 - Le code de la couche de présentation ne doit pas réécrire les validations métier déjà définies dans le service.
 - Les nouvelles décisions importantes / les nouveaux choix d'architecture doivent être documentés dans [docs/architecture.md](docs/architecture.md).
 
 ## Licence / contact
 
-Florian Robache : florian1.robache@gmail.com
-Ilaria School : NdukaNZEKA@school.ilariaacademy.org
+- Florian Robache : florian1.robache@gmail.com
+- Ilaria School : NdukaNZEKA@school.ilariaacademy.org
+
 Code source à but pédagogique.
