@@ -19,11 +19,11 @@ const CODES: Record<Echec, number> = {
 };
 
 const MESSAGES: Record<Echec, string> = {
-  creneau_non_autorise: "Creneau non autorise",
-  creneau_indisponible: "Creneau indisponible",
-  quota_atteint: "Quota de 2 reservations atteint",
-  introuvable: "Reservation introuvable",
-  interdit: "Acces refuse",
+  creneau_non_autorise: "Créneau non autorisé",
+  creneau_indisponible: "Créneau indisponible",
+  quota_atteint: "Quota de 2 réservations atteint",
+  introuvable: "Réservation introuvable",
+  interdit: "Accès refusé",
   trop_tard: "Trop tard pour annuler",
 };
 

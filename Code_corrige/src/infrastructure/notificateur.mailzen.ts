@@ -24,7 +24,7 @@ export class NotificateurMailZen implements Notificateur {
   async confirmationCreee(r: Reservation, email: string): Promise<void> {
     this.client.send({
       to: email,
-      subject: "Votre reservation " + r.id + " est confirmee",
+      subject: "Votre réservation " + r.id + " est confirmée",
       html: "<p>Salle " + r.salleId + " le " + r.creneau.debut.toLocaleString("fr-FR") + "</p>",
     });
   }
@@ -32,8 +32,8 @@ export class NotificateurMailZen implements Notificateur {
   async annulationEnregistree(r: Reservation, email: string): Promise<void> {
     this.client.send({
       to: email,
-      subject: "Votre reservation " + r.id + " est annulee",
-      html: "<p>Le creneau a ete libere.</p>",
+      subject: "Votre réservation " + r.id + " est annulée",
+      html: "<p>Le creneau a été libéré.</p>",
     });
   }
 }

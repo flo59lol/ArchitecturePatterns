@@ -7,7 +7,7 @@
 
 import { Creneau, creneauAutorise } from "./creneau";
 
-export type Statut = "confirmee" | "annulee";
+export type Statut = "confirmée" | "annulée" | "confirmee" | "annulee"; // accents pour la présentation, pas pour le stockage 
 
 export class Reservation {
   private constructor(
